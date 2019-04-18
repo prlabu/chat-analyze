@@ -7,7 +7,8 @@ Message
  |sensored_text: str
  |attachments: str
  |chat: Chat
- |ID: str
+ |msg_number: int
+ |ID: chat.name + msg_number
 
 
  Participant
@@ -15,8 +16,9 @@ Message
  |ID: str
  |pseudonym: str
  |phone: str
- |gender: str
  |chat: Chat
+ |gender: str
+ |age: str
  |ethnicity: str
 
 
@@ -24,8 +26,6 @@ Chat
  |ID: str
  |messages: Message[]
  |participants: Participant{}
- |attachments: str
- |original_content: str
  |meta: str
  anonymize()
  replace_string(a:str, b:str)
@@ -33,3 +33,25 @@ Chat
  to_json(filename:str)
  find_all_links()
  find_all_phones()
+
+
+
+
+
+chat = Chat(meta_info: str)
+
+parse_chat(chat_str: str, delimiter_format: str):
+    msg_strs = split_with_delimiter(chat_str: str, delimiter_format: str)
+    
+    for msg_str in msg_strs
+        msg = parse_msg(msg_str, delimiter_format)
+        
+        chat.add_msg(msg)
+        chat.add_participant(msg.sender)
+
+    return chat object
+
+
+
+parse_msg(msg_str: str, delimiter_format: str):
+    
