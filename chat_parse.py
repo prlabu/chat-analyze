@@ -1,8 +1,6 @@
-
-
-
-
-
+import re
+import datetime 
+import dateutil
 
 
 
@@ -29,6 +27,7 @@ class Message:
         self.ID = self.chat.ID + self.msg_number
         self.sensored_text = None
         self.attachments = None
+        self.type = None
 
 
 class Chat:
@@ -71,8 +70,13 @@ class Chat:
 
 
 def parse_chat(chat_str: str, delimiter_format: str):
+    """ Takes an exported WhatsApp chat and creates a chat object with messages .
+
+    Arguments:
+
+    Returns:
     """
-    """
+
     chat = Chat()
 
     msg_strs = split_with_delimiter(chat_str, delimiter_format)
@@ -86,9 +90,45 @@ def parse_chat(chat_str: str, delimiter_format: str):
     return chat 
 
 
-def split_with_delimiter(chat_str: str, delimiter_format: str):
+def split_with_delimiter(chat_str: str, header_format: str):
+    """ Takes an exported WhatsApp chat and creates a chat object with messages .
+
+    Arguments:
+
+    Returns:
+    """
+
     return 
 
-def parse_msg(msg_str: str, delimiter_format: str):
-    return 
 
+def parse_msg(msg_str: str, header_format_re: str):
+    """ Parses a single message string into a message object.
+
+    Arguments:
+
+    Returns:
+    """
+
+    msgMtch = re.match(header_format_re, msg_str)
+    if not msgMtch:
+        return None
+    
+    datetime_obj = parse_datetime(st)
+
+    msg_date = msgMtch.group('date')
+    msg_time = msgMtch.group('time')
+    
+    datetime_obj = datetime.strptime(f'{msgDate} {msgTime}', f'{chatParams["date-format"]} {chatParams["time-format"]}')
+
+    return Message()
+
+
+def parse_datetime(datetime_str: str, header_format_re: str):
+    """ Attempts to parse the a date-time string.
+
+    Arguments:
+
+    Returns:
+    """
+
+    return dateutil.parser.parse(datetime_str)
