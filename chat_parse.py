@@ -1,5 +1,5 @@
 import re
-import datetime 
+from datetime import datetime 
 import dateutil
 
 
@@ -13,23 +13,6 @@ class Participant:
         self.name_in_chat = name
 
 
-class Message:
-    """
-    docstring
-    """
-
-    def __init__(self, datetime: datetime, sender: Participant, orig_text: str, chat: Chat, msg_number: int):
-        self.datetime = datetime
-        self.sender = sender
-        self.orig_text = orig_text
-        self.chat = chat
-        self.msg_number = msg_number
-        self.ID = self.chat.ID + self.msg_number
-        self.sensored_text = None
-        self.attachments = None
-        self.type = None
-
-
 class Chat:
     """
     docstring
@@ -41,10 +24,10 @@ class Chat:
         self.ID = chatID
         self.meta = meta_
 
-    def add_msg(self, msg: Message):
+    def add_msg(self, msg):
         pass
 
-    def add_participant(self, participant: Participant):
+    def add_participant(self, participant:Participant):
         pass
 
     def anonymize(self):
@@ -65,11 +48,30 @@ class Chat:
     def to_json(self, filename: str):
         pass
 
+    def from_json(self, filename: str):
+        pass
+
+
+class Message:
+    """
+    docstring
+    """
+
+    def __init__(self, datetime: datetime, sender: Participant, orig_text: str, chat: Chat, msg_number:int):
+        self.datetime = datetime
+        self.sender = sender
+        self.orig_text = orig_text
+        self.chat = chat
+        self.msg_number = msg_number
+        self.ID = self.chat.ID + self.msg_number
+        self.sensored_text = None
+        self.attachments = None
+        self.type = None
 
 
 
 
-def parse_chat(chat_str: str, delimiter_format: str):
+def parse_chat(chatName:str, chat_str:str, delimiter_format:str):
     """ Takes an exported WhatsApp chat and creates a chat object with messages .
 
     Arguments:
@@ -77,12 +79,12 @@ def parse_chat(chat_str: str, delimiter_format: str):
     Returns:
     """
 
-    chat = Chat()
+    chat = Chat(chatName, 'No metadata provided')
 
-    msg_strs = split_with_delimiter(chat_str, delimiter_format)
+    msg_strs = split_on(chat_str, delimiter_format)
     
-    for msg_str in msg_strs:
-        msg = parse_msg(msg_str, delimiter_format)
+    for i, msg_str in enumerate(msg_strs):
+        msg = parse_msg(msg_str, delimiter_format, chat=chat, msg_number=i)
         
         chat.add_msg(msg)
         chat.add_participant(msg.sender)
@@ -90,18 +92,23 @@ def parse_chat(chat_str: str, delimiter_format: str):
     return chat 
 
 
-def split_with_delimiter(chat_str: str, header_format: str):
-    """ Takes an exported WhatsApp chat and creates a chat object with messages .
+def split_on(chat_str: str, split_on_re: str):
+    """ Splits a string according to a regex pattern.
 
     Arguments:
 
     Returns:
     """
 
-    return 
+    msg_strs = re.split(f'\s(?={split_on_re})', chat_str)
+
+    # eliminate empty strings from the list
+    msg_strs = [msg_str for msg_str in msg_strs if msg_str.strip()]
+
+    return msg_strs
 
 
-def parse_msg(msg_str: str, header_format_re: str):
+def parse_msg(msg_str: str, header_format_re: str, chat:Chat, msg_number:int):
     """ Parses a single message string into a message object.
 
     Arguments:
@@ -109,21 +116,19 @@ def parse_msg(msg_str: str, header_format_re: str):
     Returns:
     """
 
-    msgMtch = re.match(header_format_re, msg_str)
-    if not msgMtch:
+    msg_mtch = re.match(header_format_re, msg_str)
+    if not msg_mtch:
         return None
     
-    datetime_obj = parse_datetime(st)
-
-    msg_date = msgMtch.group('date')
-    msg_time = msgMtch.group('time')
-    
-    datetime_obj = datetime.strptime(f'{msgDate} {msgTime}', f'{chatParams["date-format"]} {chatParams["time-format"]}')
-
-    return Message()
+    datetime_obj = parse_datetime(msg_mtch.group('datetime'))
+    sender = msg_mtch.group('sender')
+    text = msg_mtch.group('msg-content')
 
 
-def parse_datetime(datetime_str: str, header_format_re: str):
+    return Message(datetime_obj, sender, text, chat=chat, msg_number=msg_number)
+
+
+def parse_datetime(datetime_str: str):
     """ Attempts to parse the a date-time string.
 
     Arguments:

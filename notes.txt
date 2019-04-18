@@ -55,3 +55,14 @@ parse_chat(chat_str: str, delimiter_format: str):
 
 parse_msg(msg_str: str, delimiter_format: str):
     
+
+
+
+
+
+
+HOURS: 
+15 March : 2-6, 7-10
+18 April : 9-1 pm
+
+
