@@ -1,0 +1,35 @@
+Project structure
+
+Message
+ |datetime: Datetime
+ |sender: Participant
+ |original_text: str
+ |sensored_text: str
+ |attachments: str
+ |chat: Chat
+ |ID: str
+
+
+ Participant
+ |name_in_chat: str
+ |ID: str
+ |pseudonym: str
+ |phone: str
+ |gender: str
+ |chat: Chat
+ |ethnicity: str
+
+
+Chat
+ |ID: str
+ |messages: Message[]
+ |participants: Participant{}
+ |attachments: str
+ |original_content: str
+ |meta: str
+ anonymize()
+ replace_string(a:str, b:str)
+ to_csv(filename: str)
+ to_json(filename:str)
+ find_all_links()
+ find_all_phones()
