@@ -39,7 +39,9 @@ class Chat:
         
         print(f'No participant found by name: {part_name}')
         return
-                
+
+    def user_add_participant_info(self):
+        for 
 
     def anonymize(self):
         pass
@@ -188,10 +190,14 @@ def main():
     chat_name = os.path.splitext(os.path.basename(chat_txt_file))[0]
     chat = parse_chat(chat_name, chat_str, '')
     
+    ip = input('Would you like to add participant information?')
+    if ip.lower() in ['y', 'yes']:
+        chat.user_add_participant_info()
+
     return
 
 
-def test():
+def test_parse_msg():
     delimiter_format = '[date, time] sender:'
     msg_str = '[1/28/19, 16:07:03] Latané Bullock: come all ye little ones'
     chat = Chat('myChat')
@@ -202,6 +208,6 @@ def test():
 
 if __name__ == "__main__":
     # main()
-    test()
+    test_parse_msg()
 
     
