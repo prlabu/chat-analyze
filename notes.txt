@@ -36,27 +36,10 @@ Chat
 
 
 
-
-
-chat = Chat(meta_info: str)
-
-parse_chat(chat_str: str, delimiter_format: str):
-    msg_strs = split_with_delimiter(chat_str: str, delimiter_format: str)
-    
-    for msg_str in msg_strs
-        msg = parse_msg(msg_str, delimiter_format)
-        
-        chat.add_msg(msg)
-        chat.add_participant(msg.sender)
-
-    return chat object
-
-
-
-parse_msg(msg_str: str, delimiter_format: str):
     
 
-
+TODO:
+check for WhatsApp meta msgs
 
 
 
@@ -64,5 +47,5 @@ parse_msg(msg_str: str, delimiter_format: str):
 HOURS: 
 15 March : 2-6, 7-10
 18 April : 9-1 pm
-
+27 April: 7:30 - 9pm
 
