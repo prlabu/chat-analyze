@@ -72,15 +72,18 @@ class Message:
 
 
 
-def parse_chat(chatName:str, chat_str:str, delimiter_format:str):
+def parse_chat(chat_name:str, chat_str:str, delimiter_format:str):
     """ Takes an exported WhatsApp chat (.txt) and creates a chat object with messages.
 
     Arguments:
+    chatName -- string identifying the name of the chat 
+    chat_str -- full string containing the exported WhatsApp chat
+    delimiter_format -- format the WhatsApp-generated delimiter. Essentially the 
+        header of each message in the .txt file. 
 
-    Returns:
     """
 
-    chat = Chat(chatName, 'No metadata provided')
+    chat = Chat(chat_name, 'No metadata provided')
 
     msg_strs = split_on(chat_str, delimiter_format)
     
@@ -142,7 +145,7 @@ def parse_datetime(datetime_str: str):
 
 def main():
     try: 
-        dummy, chat_txt_file, op_file = sys.argv
+        dummy, chat_txt_file, op_file, delim_re = sys.argv
     except: 
         print('Couldn\'t understand inputs')
         print('The usage is chat_parse.py <input-text-file> <output-csv-file>')
@@ -155,6 +158,9 @@ def main():
     chat = parse_chat(chat_name, chat_str, '')
     
     return
+
+
+
 
 if __name__ == "__main__":
     main()
