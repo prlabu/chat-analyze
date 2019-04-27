@@ -3,6 +3,12 @@ from datetime import datetime
 from dateutil.parser import parse as dt_parse
 import sys
 import os
+from enum import Enum
+
+class MessageType(Enum):
+    TEXT = 'text'
+    WHATSAPP = 'whatsapp-meta'
+    MEDIA =  'media'
 
 
 class Participant:
