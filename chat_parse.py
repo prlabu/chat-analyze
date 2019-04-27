@@ -85,7 +85,9 @@ def parse_chat(chat_name:str, chat_str:str, delimiter_format:str):
 
     chat = Chat(chat_name, 'No metadata provided')
 
-    msg_strs = split_on(chat_str, delimiter_format)
+    split_on = re.sub(r'\w+', r'.+', delimiter_format)
+    split_on = re.sub(r'([\[\]])', r'\\\1', split_on)
+    msg_strs = split_on(chat_str, split_on)
     
     for i, msg_str in enumerate(msg_strs):
         msg = parse_msg(msg_str, delimiter_format, chat=chat, msg_number=i)
