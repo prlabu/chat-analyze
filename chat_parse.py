@@ -1,7 +1,8 @@
 import re
 from datetime import datetime 
 import dateutil
-
+import sys
+import os
 
 
 class Participant:
@@ -72,7 +73,7 @@ class Message:
 
 
 def parse_chat(chatName:str, chat_str:str, delimiter_format:str):
-    """ Takes an exported WhatsApp chat and creates a chat object with messages .
+    """ Takes an exported WhatsApp chat (.txt) and creates a chat object with messages.
 
     Arguments:
 
@@ -124,7 +125,6 @@ def parse_msg(msg_str: str, header_format_re: str, chat:Chat, msg_number:int):
     sender = msg_mtch.group('sender')
     text = msg_mtch.group('msg-content')
 
-
     return Message(datetime_obj, sender, text, chat=chat, msg_number=msg_number)
 
 
@@ -137,3 +137,26 @@ def parse_datetime(datetime_str: str):
     """
 
     return dateutil.parser.parse(datetime_str)
+
+
+
+def main():
+    try: 
+        dummy, chat_txt_file, op_file = sys.argv
+    except: 
+        print('Couldn\'t understand inputs')
+        print('The usage is chat_parse.py <input-text-file> <output-csv-file>')
+
+    f = open(chat_txt_file, 'r')
+    chat_str = f.read()
+    f.close()
+    
+    chat_name = os.path.splitext(os.path.basename(chat_txt_file))[0]
+    chat = parse_chat(chat_name, chat_str, '')
+    
+    return
+
+if __name__ == "__main__":
+    main()
+
+    
