@@ -19,6 +19,10 @@ class Participant:
     def __init__(self, name: str):
         self.name_in_chat = name
         self.age = None
+        self.pseudonym = None
+        self.phone = None
+        self.gender = None
+        self.ethnicity = None
 
     def __str__(self):
         p_str = self.name_in_chat + '\n'
@@ -27,19 +31,27 @@ class Participant:
                 p_str += f'  {var}: {val}\n'
         return p_str
 
-    def user_add_age(self):
-        yesno = input(f'Would you like to add an age for participant "{self.name_in_chat}" ? (y/n) \n')
-        while yesno:
-            ip = input(f'Please enter the age (in years) of the participant. \n')
-            try: 
-                age = int(ip)
-                self.age = age
-                print('Updated partcipant : ')
+    def user_add_details(self):
+        print('Current participant...')
+        print(self)
+        ip = input('Would you like to update any participant details? (y/n) \n')
+        comeagain = is_user_ip_true(ip)
+
+        while comeagain:
+            detail = input(f'Which detail would you like to update for {self.name_in_chat}? ("age" or "gender", etc) \n')
+            if hasattr(self, detail):
+                val = input(f'What would you like {self.name_in_chat}\'s {detail} to be? \n')
+                setattr(self, detail, val)
+                print('Updated partcipant... ')
                 print(self)
-                yesno = False
-            except ValueError:
-                print('The input was not an integer!')
-                yesno = input(f'Would you try again? (y/n) \n')
+                print()
+
+                ip = input(f'Would you like to enter more details? (y/n) \n\n')
+                comeagain = is_user_ip_true(ip)
+            else:
+                print('Oops, Couldn\'t find that detail for the user.')
+                ip = input(f'Would you try again? (y/n) \n\n')
+                comeagain = is_user_ip_true(ip)
         
         return 
 
@@ -112,6 +124,9 @@ class Message:
         self.type = None
 
 
+def is_user_ip_true(ip: str):
+    ip = ip.lower()
+    return ip == 'y' or ip == 'yes'
 
 
 def parse_chat(chat_name:str, chat_str:str, delimiter_format:str):
@@ -236,7 +251,7 @@ def test_parse_msg():
 
 def test_participant():
     new_part = Participant(name='Bobby')
-    new_part.user_add_age()
+    new_part.user_add_details()
 
     return 
 
