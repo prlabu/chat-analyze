@@ -4,6 +4,7 @@ from dateutil.parser import parse as dt_parse
 import sys
 import os
 from enum import Enum
+import csv
 
 class MessageType(Enum):
     TEXT = 'text'
@@ -68,7 +69,8 @@ class Chat:
         self.meta = meta_
 
     def add_msg(self, msg):
-        pass
+        self.messages.append(msg)
+        return
 
     def add_participant(self, participant:Participant):
         self.participants.add(participant)
@@ -116,10 +118,10 @@ class Message:
         self.datetime = datetime
         self.sender = sender
         self.orig_text = orig_text
+        self.sensored_text = None
         self.chat = chat
         self.msg_number = msg_number
         self.ID = self.chat.ID + str(self.msg_number)
-        self.sensored_text = None
         self.attachments = None
         self.type = None
 
@@ -143,10 +145,11 @@ def parse_chat(chat_name:str, chat_str:str, delimiter_format:str):
     chat = Chat(chat_name, 'No metadata provided')
 
 
-    split_on = re.sub(r'\w+', r'.+', delimiter_format[:-1])
-    split_on = re.sub(r'([\[\]])', r'\\\1', split_on)
+    split_on_re = re.sub(r'\w+', r'.+', delimiter_format[:-1])
+    split_on_re = re.sub(r'([\[\]])', r'\\\1', split_on_re)
 
-    msg_strs = split_on(chat_str, split_on)
+    msg_strs = split_on(split_on_re, chat_str)
+    print(f'Chat split into -{len(msg_strs)}- messages')
     
     for i, msg_str in enumerate(msg_strs):
         msg = parse_msg(msg_str, delimiter_format, chat=chat, msg_number=i)
@@ -187,7 +190,7 @@ def parse_msg(msg_str: str, delimiter_format: str, chat:Chat, msg_number:int):
 
     msg_mtch = re.match(msg_re, msg_str, re.DOTALL)
     if not msg_mtch:
-        print('Error in parsing msg: \n     msg_str')
+        print(f'Error in parsing msg: \n     {msg_str}')
         return None
 
     date = msg_mtch.group('date').strip()
@@ -219,7 +222,29 @@ def parse_datetime(datetime_str: str):
     # using dateutil.parser.parse
     return dt_parse(datetime_str)
 
+def chat_to_messages_csv(chat:Chat):
+    msgs_outfile = f'assets/{chat.ID}-msgs.csv'
 
+    msg_f = open(msgs_outfile, 'w')
+    fieldnames = ['chatID', 'datetime', 'sender', 'orig_text']
+    writer = csv.DictWriter(msg_f, dialect='excel', fieldnames=fieldnames)
+    writer.writeheader()
+    
+    for msg in chat.messages:
+        msg_dic = {}
+        msg_dic['chatID'] = msg.chat.ID
+        msg_dic['datetime'] = str(msg.datetime)
+        msg_dic['sender'] = str(msg.sender.name_in_chat)
+        msg_dic['orig_text'] = str(msg.orig_text)
+
+        print(msg_dic)
+        msg_dic = {k:v for k,v in msg_dic.items() if k in fieldnames}
+        
+        
+        writer.writerow(msg_dic)
+    msg_f.close()
+
+    return
 
 def main():
     try: 
@@ -255,10 +280,24 @@ def test_participant():
 
     return 
 
+def test_chat_to_messages_csv():
+    chat_txt_file = 'assets/ligma-export-trunk.txt'
+    f = open(chat_txt_file, 'r')
+    chat_str = f.read()
+    f.close()
+    
+    chat_name = os.path.splitext(os.path.basename(chat_txt_file))[0]
+    chat = parse_chat(chat_name, chat_str, '[date, time] sender:')
+
+    chat_to_messages_csv(chat)
+
+    return
+
 if __name__ == "__main__":
     # main()
-    
-    #test_parse_msg()
 
-    test_participant()
-    
+    # test_parse_msg()
+
+    # test_participant()
+
+    test_chat_to_messages_csv()
