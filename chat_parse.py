@@ -62,11 +62,12 @@ class Chat:
     docstring
     """
 
-    def __init__(self, chatID:str, meta_:str = None):
+    def __init__(self, chatID:str, format_:str,meta_:str = None):
         self.messages = []
         self.participants = set()
         self.ID = chatID
         self.meta = meta_
+        self.format = format_
 
     def add_msg(self, msg):
         self.messages.append(msg)
@@ -86,6 +87,28 @@ class Chat:
 
     def user_add_participant_info(self):
         pass
+
+    def to_messages_csv(self):
+        msgs_outfile = f'assets/{self.ID}-msgs.csv'
+
+        msg_f = open(msgs_outfile, 'w')
+        fieldnames = ['chatID', 'datetime', 'sender', 'orig_text']
+        writer = csv.DictWriter(msg_f, dialect='excel', fieldnames=fieldnames)
+        writer.writeheader()
+
+        for msg in self.messages:
+            msg_dic = {}
+            msg_dic['chatID'] = self.ID
+            msg_dic['datetime'] = str(msg.datetime)
+            msg_dic['sender'] = str(msg.sender.name_in_chat)
+            msg_dic['orig_text'] = str(msg.orig_text)
+
+            msg_dic = {k:v for k,v in msg_dic.items() if k in fieldnames}
+            
+            writer.writerow(msg_dic)
+        msg_f.close()
+
+        return
 
     def anonymize(self):
         pass
@@ -131,28 +154,28 @@ def is_user_ip_true(ip: str):
     return ip == 'y' or ip == 'yes'
 
 
-def parse_chat(chat_name:str, chat_str:str, delimiter_format:str):
+def parse_chat(chat_name:str, chat_str:str, chat_format:str):
     """ Takes an exported WhatsApp chat (.txt) and creates a chat object with messages.
 
     Arguments:
     chatName -- string identifying the name of the chat 
     chat_str -- full string containing the exported WhatsApp chat
-    delimiter_format -- format the WhatsApp-generated delimiter. Essentially the 
-        header of each message in the .txt file. 
+    chat_format -- format the WhatsApp-generated delimiter. Essentially the 
+        header of each message in the .txt file. Eg: "[dateDMY, time24] sender: content"
 
     """
 
-    chat = Chat(chat_name, 'No metadata provided')
+    chat = Chat(chatID=chat_name, format_=chat_format, meta_='No metadata provided')
 
-
-    split_on_re = re.sub(r'\w+', r'.+', delimiter_format[:-1])
+    split_on_re = chat.format.split('sender')[0]   # get everything up until 'sender'
+    split_on_re = re.sub(r'\w+', r'.+', split_on_re)
     split_on_re = re.sub(r'([\[\]])', r'\\\1', split_on_re)
 
     msg_strs = split_on(split_on_re, chat_str)
     print(f'Chat split into -{len(msg_strs)}- messages')
     
     for i, msg_str in enumerate(msg_strs):
-        msg = parse_msg(msg_str, delimiter_format, chat=chat, msg_number=i)
+        msg = parse_msg(msg_str, chat=chat, msg_number=i)
         
         chat.add_msg(msg)
 
@@ -175,7 +198,7 @@ def split_on(split_on_re: str, chat_str: str):
     return msg_strs
 
 
-def parse_msg(msg_str: str, delimiter_format: str, chat:Chat, msg_number:int):
+def parse_msg(msg_str: str, chat:Chat, msg_number:int):
     """ Parses a single message string into a message object.
 
     Arguments:
@@ -184,7 +207,7 @@ def parse_msg(msg_str: str, delimiter_format: str, chat:Chat, msg_number:int):
     """
 
 
-    msg_re = re.sub(r'(\w+)', r'(?P<\1>.*)', delimiter_format)
+    msg_re = re.sub(r'(\w+)', r'(?P<\1>.*)', chat.format)
     msg_re = re.sub(r'([\[\]])', r'\\\1', msg_re)
     msg_re = msg_re + '(?P<msg>.*)'
 
@@ -222,29 +245,7 @@ def parse_datetime(datetime_str: str):
     # using dateutil.parser.parse
     return dt_parse(datetime_str)
 
-def chat_to_messages_csv(chat:Chat):
-    msgs_outfile = f'assets/{chat.ID}-msgs.csv'
 
-    msg_f = open(msgs_outfile, 'w')
-    fieldnames = ['chatID', 'datetime', 'sender', 'orig_text']
-    writer = csv.DictWriter(msg_f, dialect='excel', fieldnames=fieldnames)
-    writer.writeheader()
-    
-    for msg in chat.messages:
-        msg_dic = {}
-        msg_dic['chatID'] = msg.chat.ID
-        msg_dic['datetime'] = str(msg.datetime)
-        msg_dic['sender'] = str(msg.sender.name_in_chat)
-        msg_dic['orig_text'] = str(msg.orig_text)
-
-        print(msg_dic)
-        msg_dic = {k:v for k,v in msg_dic.items() if k in fieldnames}
-        
-        
-        writer.writerow(msg_dic)
-    msg_f.close()
-
-    return
 
 def main():
     try: 
@@ -268,10 +269,10 @@ def main():
 
 
 def test_parse_msg():
-    delimiter_format = '[date, time] sender:'
+    delimiter_format = '[date, time] sender: content'
     msg_str = '[1/28/19, 16:07:03] Latané Bullock: come all ye little ones'
-    chat = Chat('myChat')
-    msg_obj = parse_msg(msg_str, delimiter_format, chat, 1)
+    chat = Chat(chatID='myChat', format_=delimiter_format)
+    msg_obj = parse_msg(msg_str, chat, 1)
     return msg_obj
 
 def test_participant():
@@ -289,7 +290,7 @@ def test_chat_to_messages_csv():
     chat_name = os.path.splitext(os.path.basename(chat_txt_file))[0]
     chat = parse_chat(chat_name, chat_str, '[date, time] sender:')
 
-    chat_to_messages_csv(chat)
+    chat.to_messages_csv()
 
     return
 
