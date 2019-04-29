@@ -18,6 +18,30 @@ class Participant:
 
     def __init__(self, name: str):
         self.name_in_chat = name
+        self.age = None
+
+    def __str__(self):
+        p_str = self.name_in_chat + '\n'
+        for var, val in vars(self).items():
+            if not var == 'name_in_chat':
+                p_str += f'  {var}: {val}\n'
+        return p_str
+
+    def user_add_age(self):
+        yesno = input(f'Would you like to add an age for participant "{self.name_in_chat}" ? (y/n) \n')
+        while yesno:
+            ip = input(f'Please enter the age (in years) of the participant. \n')
+            try: 
+                age = int(ip)
+                self.age = age
+                print('Updated partcipant : ')
+                print(self)
+                yesno = False
+            except ValueError:
+                print('The input was not an integer!')
+                yesno = input(f'Would you try again? (y/n) \n')
+        
+        return 
 
 
 class Chat:
@@ -47,7 +71,7 @@ class Chat:
         return
 
     def user_add_participant_info(self):
-        for 
+        pass
 
     def anonymize(self):
         pass
@@ -210,10 +234,16 @@ def test_parse_msg():
     msg_obj = parse_msg(msg_str, delimiter_format, chat, 1)
     return msg_obj
 
+def test_participant():
+    new_part = Participant(name='Bobby')
+    new_part.user_add_age()
 
+    return 
 
 if __name__ == "__main__":
     # main()
-    test_parse_msg()
+    
+    #test_parse_msg()
 
+    test_participant()
     
