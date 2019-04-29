@@ -36,12 +36,16 @@ Chat
 
 
 
+Notes: 
+Messages from WhatsApp are currently considered valid messages, with sender=WhatsApp
+
     
 
 TODO:
 check for WhatsApp meta msgs
 make sure dateutil is parsing dates correctly, 12hr vs 24hr
 preprocessing - make sure no [] in the chat besides the assumed ones
+
 
 
 

@@ -85,6 +85,17 @@ class Chat:
         print(f'No participant found by name: {part_name}')
         return
 
+    def add_participant_by_name(self, part_name):
+        """Always returns a participant - whether new or pre-existing
+        """
+        if part_name not in list(map(lambda part: part.name_in_chat, self.participants)):
+            new_part = Participant(part_name)
+            self.add_participant(new_part)
+            part = new_part
+        else:
+            part = self.get_participant_by_name(part_name)
+        return part
+
     def user_add_participant_info(self):
         pass
 
@@ -176,8 +187,8 @@ def parse_chat(chat_name:str, chat_str:str, chat_format:str):
     
     for i, msg_str in enumerate(msg_strs):
         msg = parse_msg(msg_str, chat=chat, msg_number=i)
-        
-        chat.add_msg(msg)
+        if msg:
+            chat.add_msg(msg)
 
     return chat 
 
@@ -209,28 +220,45 @@ def parse_msg(msg_str: str, chat:Chat, msg_number:int):
 
     msg_re = re.sub(r'(\w+)', r'(?P<\1>.*)', chat.format)
     msg_re = re.sub(r'([\[\]])', r'\\\1', msg_re)
-    msg_re = msg_re + '(?P<msg>.*)'
 
     msg_mtch = re.match(msg_re, msg_str, re.DOTALL)
     if not msg_mtch:
-        print(f'Error in parsing msg: \n     {msg_str}')
-        return None
+    
+        # see if the message is sent by WhatsApp
+        WA_re = chat.format.split('sender')[0].strip()   # get everything up until 'sender'
+        WA_re = re.sub(r'(\w+)', r'(?P<\1>.*)', WA_re)
+        WA_re = re.sub(r'([\[\]])', r'\\\1', WA_re)
+        WA_re += '(?P<remain>.*)'
+        
+        WA_mtch = re.match(WA_re, msg_str, re.DOTALL)
+        if not WA_mtch:
+            print(f'Error in parsing msg: \n     {msg_str}')
+            return None
+
+        date = WA_mtch.group('date').strip()
+        time = WA_mtch.group('time').strip()
+        datetime_obj = parse_datetime(date + ' ' + time)
+        sender_name = 'WhatsApp'
+        text = WA_mtch.group('remain').strip()
+        sender = chat.add_participant_by_name(sender_name)
+
+        msg_obj = Message(datetime_obj, sender=sender, orig_text=text, chat=chat, msg_number=msg_number)
+        msg_obj.type = 'whatsapp-meta'
+
+
+        return msg_obj
 
     date = msg_mtch.group('date').strip()
     time = msg_mtch.group('time').strip()
     datetime_obj = parse_datetime(date + ' ' + time)
 
     sender_name = msg_mtch.group('sender').strip()
-    if sender_name not in list(map(lambda part: part.name_in_chat, chat.participants)):
-        new_part = Participant(sender_name)
-        chat.add_participant(new_part)
-        sender = new_part
-    else:
-        sender = chat.get_participant_by_name(sender_name)
+    sender = chat.add_participant_by_name(sender_name)
 
-    text = msg_mtch.group('msg').strip()
+    text = msg_mtch.group('content').strip()
 
-    msg_obj = Message(datetime_obj, sender, text, chat=chat, msg_number=msg_number)
+    msg_obj = Message(datetime_obj, sender=sender, orig_text=text, chat=chat, msg_number=msg_number)
+    msg_obj.type = 'user-text'
     return msg_obj
 
 
@@ -288,7 +316,7 @@ def test_chat_to_messages_csv():
     f.close()
     
     chat_name = os.path.splitext(os.path.basename(chat_txt_file))[0]
-    chat = parse_chat(chat_name, chat_str, '[date, time] sender:')
+    chat = parse_chat(chat_name, chat_str, '[date, time] sender: content')
 
     chat.to_messages_csv()
 
