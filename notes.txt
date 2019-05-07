@@ -45,6 +45,7 @@ TODO:
 check for WhatsApp meta msgs
 make sure dateutil is parsing dates correctly, 12hr vs 24hr
 preprocessing - make sure no [] in the chat besides the assumed ones
+README
 
 
 
@@ -53,5 +54,7 @@ HOURS:
 15 March : 2-6, 7-10
 18 April : 9-1 pm
 27 April: 7:30pm - 10:30pm
-29 April: 11:30am - 2pm
+29 April: 11:30am - 2pm, 12:30-2am
+7 May: 10:15am
+
 

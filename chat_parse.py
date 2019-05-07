@@ -96,8 +96,14 @@ class Chat:
             part = self.get_participant_by_name(part_name)
         return part
 
-    def user_add_participant_info(self):
-        pass
+    def user_add_participants_info(self):
+        for part in self.participants:
+            ip = input(f'Would you like to add info for participant name: "{part.name_in_chat}"" ? (y/n, q to quit) \n')
+            if ip.lower() in ['y', 'yes']:
+                part.user_add_details()
+            elif ip.lower() in ['q', 'quit']:
+                break
+        return
 
     def to_messages_csv(self):
         msgs_outfile = f'assets/{self.ID}-msgs.csv'
@@ -228,9 +234,12 @@ def parse_msg(msg_str: str, chat:Chat, msg_number:int):
         WA_re = chat.format.split('sender')[0].strip()   # get everything up until 'sender'
         WA_re = re.sub(r'(\w+)', r'(?P<\1>.*)', WA_re)
         WA_re = re.sub(r'([\[\]])', r'\\\1', WA_re)
-        WA_re += '(?P<remain>.*)'
+        WA_re += '(?P<remain>.*)' # the msg format is then something like '[date, time] whats-app-messge'
+        
         
         WA_mtch = re.match(WA_re, msg_str, re.DOTALL)
+        
+        # if not the format of a normal message and not a WhatsApp meta message .... 
         if not WA_mtch:
             print(f'Error in parsing msg: \n     {msg_str}')
             return None
@@ -277,28 +286,29 @@ def parse_datetime(datetime_str: str):
 
 def main():
     try: 
-        dummy, chat_txt_file, op_file, delim_re = sys.argv
+        dummy, chat_txt_file, op_file, delim_format = sys.argv
     except: 
         print('Couldn\'t understand inputs')
-        print('The usage is chat_parse.py <input-text-file> <output-csv-file>')
+        print('The usage is chat_parse.py <input-text-file> <output-csv-file> <delimiter-format>')
+        return 
 
     f = open(chat_txt_file, 'r')
     chat_str = f.read()
     f.close()
     
     chat_name = os.path.splitext(os.path.basename(chat_txt_file))[0]
-    chat = parse_chat(chat_name, chat_str, '')
+    chat = parse_chat(chat_name, chat_str, delim_format)
     
-    ip = input('Would you like to add participant information?')
+    ip = input('Would you like to add participant information?\n')
     if ip.lower() in ['y', 'yes']:
-        chat.user_add_participant_info()
+        chat.user_add_participants_info()
 
     return
 
 
 def test_parse_msg():
     delimiter_format = '[date, time] sender: content'
-    msg_str = '[1/28/19, 16:07:03] Latané Bullock: come all ye little ones'
+    msg_str = '[1/28/19, 16:07:03] Latané Bullock: come all ye good ones'
     chat = Chat(chatID='myChat', format_=delimiter_format)
     msg_obj = parse_msg(msg_str, chat, 1)
     return msg_obj
@@ -323,10 +333,10 @@ def test_chat_to_messages_csv():
     return
 
 if __name__ == "__main__":
-    # main()
+    main()
 
     # test_parse_msg()
 
     # test_participant()
 
-    test_chat_to_messages_csv()
+    # test_chat_to_messages_csv()
