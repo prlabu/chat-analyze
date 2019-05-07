@@ -5,6 +5,7 @@ import sys
 import os
 from enum import Enum
 import csv
+import phonenumbers
 
 class MessageType(Enum):
     TEXT = 'text'
@@ -137,11 +138,11 @@ class Chat:
         web_link_re = re.compile(r'https?://[\S]+')
         for msg in self.messages:
             msg.sensored_text = web_link_re.sub('<web link omitted>', msg.sensored_text)
-        
         return     
 
     def find_all_phones(self):
-        phone_re = re.compile(r'\+?[0-9][0-9 ()-]{7,13}[0-9]')
+        # phone_re = re.compile(r'\+?[0-9][0-9 ()-]{7,13}[0-9]')
+        phone_re = re.compile(r'@[0-9]{10,12}')
         for msg in self.messages:
             mtches = phone_re.findall(msg.sensored_text)
             for mtch in mtches:
@@ -219,9 +220,14 @@ def split_on(split_on_re: str, chat_str: str):
     """
 
     msg_strs = re.split(f'\s(?={split_on_re})', chat_str)
+    print(f'Split_on re: "{split_on_re}"')
 
     # eliminate empty strings from the list
     msg_strs = [msg_str for msg_str in msg_strs if msg_str.strip()]
+
+    for msg_str in msg_strs:
+        print(f'Msg: "{msg_str}"')
+        print()
 
     return msg_strs
 
@@ -252,7 +258,8 @@ def parse_msg(msg_str: str, chat:Chat, msg_number:int):
         
         # if not the format of a normal message and not a WhatsApp meta message .... 
         if not WA_mtch:
-            print(f'Error in parsing msg: \n     {msg_str}')
+            print(f'Error in parsing msg: \n     "{msg_str}"')
+            # print(f'Regex used: {WA_re}\n')
             return None
 
         date = WA_mtch.group('date').strip()
@@ -296,14 +303,28 @@ def parse_datetime(datetime_str: str):
 
 
 def main():
-    try: 
-        dummy, chat_txt_file, delim_format = sys.argv
-    except: 
-        print('Couldn\'t understand inputs')
-        print('The usage is \n python chat_parse.py <input-text-file> <delimiter-format>')
-        return 
 
-    f = open(chat_txt_file, 'r')
+    # ip = input('What is the name (directory+filename) of the chat.txt? \n')
+    # chat_txt_file = ip
+    # comeagain = not os.path.exists(ip)
+    # while comeagain:
+    #     print('Coundn\'t find a directory by that name.')
+    #     ip = input('What is the name (directory+filename) of the chat.txt? (q to quit) \n')
+    #     if ip in ['q', 'quit']:
+    #         return
+    #     if os.path.exists(ip):
+    #         comeagain = False
+    #         chat_txt_file = ip
+        
+    # ip_prompt = 'What is the delimiter format of the text?\n '
+    # ip_prompt += 'Eg: "[date, time] sender: content" ... Please refer to the README for more info \n'
+    # ip = input(ip_prompt)
+    # delim_format = ip
+
+    chat_txt_file = 'assets/ligma-export-trunk.txt'
+    # chat_txt_file = 'assets/3-2018-CHI_F59_R_x.txt'
+    delim_format = 'date, time - sender: content'
+    f = open(chat_txt_file, 'r', encoding='utf-8-sig')
     chat_str = f.read()
     f.close()
     
