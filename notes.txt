@@ -38,8 +38,17 @@ Chat
 
 Notes: 
 Messages from WhatsApp are currently considered valid messages, with sender=WhatsApp
+It is assumed that only one type of format is present within one text file. 
+Phone numbers can be very hard to find, so the user validates each one individually
 
-    
+The standard progresssion is: 
+call parse chat, specifying with text file you want to parse along with its format
+have the option to add user details (pseudonym, age, etc)
+find all phone numbers
+find all links
+
+
+
 
 TODO:
 check for WhatsApp meta msgs

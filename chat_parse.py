@@ -20,7 +20,7 @@ class Participant:
     def __init__(self, name: str):
         self.name_in_chat = name
         self.age = None
-        self.pseudonym = None
+        self.pseudonym = name
         self.phone = None
         self.gender = None
         self.ethnicity = None
@@ -98,7 +98,7 @@ class Chat:
 
     def user_add_participants_info(self):
         for part in self.participants:
-            ip = input(f'Would you like to add info for participant name: "{part.name_in_chat}"" ? (y/n, q to quit) \n')
+            ip = input(f'Would you like to add info for participant name: "{part.name_in_chat}" ? (y/n, q to quit) \n')
             if ip.lower() in ['y', 'yes']:
                 part.user_add_details()
             elif ip.lower() in ['q', 'quit']:
@@ -109,7 +109,7 @@ class Chat:
         msgs_outfile = f'assets/{self.ID}-msgs.csv'
 
         msg_f = open(msgs_outfile, 'w')
-        fieldnames = ['chatID', 'datetime', 'sender', 'orig_text']
+        fieldnames = ['chatID', 'datetime', 'sender', 'sensored_text']
         writer = csv.DictWriter(msg_f, dialect='excel', fieldnames=fieldnames)
         writer.writeheader()
 
@@ -117,8 +117,8 @@ class Chat:
             msg_dic = {}
             msg_dic['chatID'] = self.ID
             msg_dic['datetime'] = str(msg.datetime)
-            msg_dic['sender'] = str(msg.sender.name_in_chat)
-            msg_dic['orig_text'] = str(msg.orig_text)
+            msg_dic['sender'] = str(msg.sender.pseudonym)
+            msg_dic['sensored_text'] = str(msg.sensored_text)
 
             msg_dic = {k:v for k,v in msg_dic.items() if k in fieldnames}
             
@@ -134,10 +134,21 @@ class Chat:
         pass
     
     def find_all_links(self):
-        pass     
+        web_link_re = re.compile(r'https?://[\S]+')
+        for msg in self.messages:
+            msg.sensored_text = web_link_re.sub('<web link omitted>', msg.sensored_text)
+        
+        return     
 
     def find_all_phones(self):
-        pass   
+        phone_re = re.compile(r'\+?[0-9][0-9 ()-]{7,13}[0-9]')
+        for msg in self.messages:
+            mtches = phone_re.findall(msg.sensored_text)
+            for mtch in mtches:
+                ip = input(f'Would you like to replace "{mtch}" in the following message? (y/n)\n {msg.sensored_text}\n')
+                if is_user_ip_true(ip):
+                    msg.sensored_text = re.sub(re.escape(mtch), '<phone number omitted>', msg.sensored_text)
+        return
 
     def to_csv(self, filename: str):
         pass
@@ -158,7 +169,7 @@ class Message:
         self.datetime = datetime
         self.sender = sender
         self.orig_text = orig_text
-        self.sensored_text = None
+        self.sensored_text = orig_text
         self.chat = chat
         self.msg_number = msg_number
         self.ID = self.chat.ID + str(self.msg_number)
@@ -168,7 +179,7 @@ class Message:
 
 def is_user_ip_true(ip: str):
     ip = ip.lower()
-    return ip == 'y' or ip == 'yes'
+    return ip in ['y', 'yes']
 
 
 def parse_chat(chat_name:str, chat_str:str, chat_format:str):
@@ -286,10 +297,10 @@ def parse_datetime(datetime_str: str):
 
 def main():
     try: 
-        dummy, chat_txt_file, op_file, delim_format = sys.argv
+        dummy, chat_txt_file, delim_format = sys.argv
     except: 
         print('Couldn\'t understand inputs')
-        print('The usage is chat_parse.py <input-text-file> <output-csv-file> <delimiter-format>')
+        print('The usage is \n python chat_parse.py <input-text-file> <delimiter-format>')
         return 
 
     f = open(chat_txt_file, 'r')
@@ -299,9 +310,21 @@ def main():
     chat_name = os.path.splitext(os.path.basename(chat_txt_file))[0]
     chat = parse_chat(chat_name, chat_str, delim_format)
     
-    ip = input('Would you like to add participant information?\n')
-    if ip.lower() in ['y', 'yes']:
+    ip = input('Would you like to add participant information? (y/n)\n')
+    if is_user_ip_true(ip):
         chat.user_add_participants_info()
+    
+    ip = input('Would you like to find and replace all web links? (y/n) \n')
+    if is_user_ip_true(ip):
+        chat.find_all_links()
+
+    ip = input('Would you like to find all phone numbers? (y/n) \n')
+    if is_user_ip_true(ip):
+        chat.find_all_phones()
+
+    ip = input('Would you like to output the messages to a CSV? (y/n) \n')
+    if is_user_ip_true(ip):
+        chat.to_messages_csv()
 
     return
 
