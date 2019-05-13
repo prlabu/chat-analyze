@@ -6,6 +6,7 @@ import os
 from enum import Enum
 import csv
 import phonenumbers
+import json
 
 class MessageType(Enum):
     TEXT = 'text'
@@ -63,7 +64,7 @@ class Chat:
     docstring
     """
 
-    def __init__(self, chatID:str, format_:str,meta_:str = None):
+    def __init__(self, chatID:str, format_:dict,meta_:str = None):
         self.messages = []
         self.participants = set()
         self.ID = chatID
@@ -196,9 +197,10 @@ def parse_chat(chat_name:str, chat_str:str, chat_format:str):
 
     chat = Chat(chatID=chat_name, format_=chat_format, meta_='No metadata provided')
 
-    split_on_re = chat.format.split('sender')[0]   # get everything up until 'sender'
-    split_on_re = re.sub(r'\w+', r'.+', split_on_re)
-    split_on_re = re.sub(r'([\[\]])', r'\\\1', split_on_re)
+    # split_on_re = chat.format.split('sender')[0]   # get everything up until 'sender'
+    # split_on_re = re.sub(r'([\[\]])', r'\\\1', split_on_re) # escape brackets if they exist
+    # split_on_re = re.sub(r'\w+', r'.+', split_on_re)
+    split_on_re = chat.format['split_on_re']
 
     msg_strs = split_on(split_on_re, chat_str)
     print(f'Chat split into -{len(msg_strs)}- messages')
@@ -225,10 +227,6 @@ def split_on(split_on_re: str, chat_str: str):
     # eliminate empty strings from the list
     msg_strs = [msg_str for msg_str in msg_strs if msg_str.strip()]
 
-    for msg_str in msg_strs:
-        print(f'Msg: "{msg_str}"')
-        print()
-
     return msg_strs
 
 
@@ -241,18 +239,16 @@ def parse_msg(msg_str: str, chat:Chat, msg_number:int):
     """
 
 
-    msg_re = re.sub(r'(\w+)', r'(?P<\1>.*)', chat.format)
-    msg_re = re.sub(r'([\[\]])', r'\\\1', msg_re)
+    # msg_re = re.sub(r'(\w+)', r'(?P<\1>.*)', chat.format)
+    # msg_re = re.sub(r'([\[\]])', r'\\\1', msg_re)
+    msg_re = chat.format['std_msg_re']
 
     msg_mtch = re.match(msg_re, msg_str, re.DOTALL)
     if not msg_mtch:
-    
-        # see if the message is sent by WhatsApp
-        WA_re = chat.format.split('sender')[0].strip()   # get everything up until 'sender'
-        WA_re = re.sub(r'(\w+)', r'(?P<\1>.*)', WA_re)
-        WA_re = re.sub(r'([\[\]])', r'\\\1', WA_re)
-        WA_re += '(?P<remain>.*)' # the msg format is then something like '[date, time] whats-app-messge'
-        
+        # note a std message type - see if the message is sent by WhatsApp
+
+        WA_re = chat.format['WA_msg_re']
+        # WA_re += '(?P<remain>.*)' # the msg format is then something like '[date, time] whats-app-messge'
         
         WA_mtch = re.match(WA_re, msg_str, re.DOTALL)
         
@@ -266,8 +262,9 @@ def parse_msg(msg_str: str, chat:Chat, msg_number:int):
         time = WA_mtch.group('time').strip()
         datetime_obj = parse_datetime(date + ' ' + time)
         sender_name = 'WhatsApp'
-        text = WA_mtch.group('remain').strip()
         sender = chat.add_participant_by_name(sender_name)
+        text = WA_mtch.group('remain').strip()
+        
 
         msg_obj = Message(datetime_obj, sender=sender, orig_text=text, chat=chat, msg_number=msg_number)
         msg_obj.type = 'whatsapp-meta'
@@ -321,15 +318,19 @@ def main():
     # ip = input(ip_prompt)
     # delim_format = ip
 
-    chat_txt_file = 'assets/ligma-export-trunk.txt'
-    # chat_txt_file = 'assets/3-2018-CHI_F59_R_x.txt'
-    delim_format = 'date, time - sender: content'
+    # chat_txt_file = 'assets/test2.txt'
+    chat_txt_file = 'assets/3-2018-CHI_F59_R_x.txt'
+    # delim_format = 'date, time - sender: content'
+    chat_name = os.path.splitext(os.path.basename(chat_txt_file))[0]
+    
+    with open('assets/' + chat_name + '-format.json', 'r') as f:
+        format_ = json.loads(f.read())
+
     f = open(chat_txt_file, 'r', encoding='utf-8-sig')
     chat_str = f.read()
     f.close()
     
-    chat_name = os.path.splitext(os.path.basename(chat_txt_file))[0]
-    chat = parse_chat(chat_name, chat_str, delim_format)
+    chat = parse_chat(chat_name, chat_str, format_)
     
     ip = input('Would you like to add participant information? (y/n)\n')
     if is_user_ip_true(ip):
