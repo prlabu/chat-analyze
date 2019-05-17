@@ -108,7 +108,7 @@ class Chat:
         return
 
     def to_messages_csv(self):
-        msgs_outfile = f'assets/{self.ID}-msgs.csv'
+        msgs_outfile = f'assets/csv/{self.ID}-msgs.csv'
 
         msg_f = open(msgs_outfile, 'w')
         fieldnames = ['chatID', 'datetime', 'sender', 'sensored_text']
@@ -245,6 +245,7 @@ def parse_msg(msg_str: str, chat:Chat, msg_number:int):
 
     msg_mtch = re.match(msg_re, msg_str, re.DOTALL)
     if not msg_mtch:
+        print(f'Abnormal msg : \n     "{msg_str}"')
         # note a std message type - see if the message is sent by WhatsApp
 
         WA_re = chat.format['WA_msg_re']
@@ -265,7 +266,6 @@ def parse_msg(msg_str: str, chat:Chat, msg_number:int):
         sender = chat.add_participant_by_name(sender_name)
         text = WA_mtch.group('remain').strip()
         
-
         msg_obj = Message(datetime_obj, sender=sender, orig_text=text, chat=chat, msg_number=msg_number)
         msg_obj.type = 'whatsapp-meta'
 
@@ -295,7 +295,12 @@ def parse_datetime(datetime_str: str):
     """
 
     # using dateutil.parser.parse
-    return dt_parse(datetime_str)
+    try: 
+        return dt_parse(datetime_str)
+    except ValueError:
+        print(f'Could not parse datetime... "{datetime_str}"') 
+        return None
+
 
 
 
@@ -319,14 +324,13 @@ def main():
     # delim_format = ip
 
     # chat_txt_file = 'assets/test2.txt'
-    chat_txt_file = 'assets/3-2018-CHI_F59_R_x.txt'
-    # delim_format = 'date, time - sender: content'
+    chat_txt_file = '2018-OTH_M1_R_x.txt'
     chat_name = os.path.splitext(os.path.basename(chat_txt_file))[0]
     
-    with open('assets/' + chat_name + '-format.json', 'r') as f:
+    with open('assets/format_json/' + chat_name + '-format.json', 'r') as f:
         format_ = json.loads(f.read())
 
-    f = open(chat_txt_file, 'r', encoding='utf-8-sig')
+    f = open('assets/raw_txt/' + chat_txt_file, 'r', encoding='utf-8-sig')
     chat_str = f.read()
     f.close()
     
